@@ -1,0 +1,33 @@
+# Python virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django database & environment
+*.sqlite3
+db.sqlite3
+.env
+
+# macOS system files
+.DS_Store
+
+# VSCode settings
+.vscode/
+
+# Node.js dependencies
+node_modules/
+
+# Logs
+*.log
+
+# Test cache
+.pytest_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
