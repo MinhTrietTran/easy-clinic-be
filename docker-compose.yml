@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  user_service_db:
+    image: postgres:16
+    container_name: user_service_db
+    restart: always
+    environment:
+      POSTGRES_DB: user_service_db
+      POSTGRES_USER: user_service_user
+      POSTGRES_PASSWORD: yourpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - user_service_postgres_data:/var/lib/postgresql/data
+
+  user_service:
+    build: ./user_service
+    container_name: user_service_app
+    ports:
+      - "5001:5000"
+    depends_on:
+      - user_service_db
+    environment:
+      - POSTGRES_DB=user_service_db
+      - POSTGRES_USER=user_service_user
+      - POSTGRES_PASSWORD=yourpassword
+      - POSTGRES_HOST=user_service_db # Rất quan trọng: trỏ đúng service DB
+      - POSTGRES_PORT=5432
+
+volumes:
+  user_service_postgres_data:
