@@ -21,12 +21,24 @@ services:
       - "5001:5000"
     depends_on:
       - user_service_db
+      - consul
     environment:
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
       - POSTGRES_DB=user_service_db
       - POSTGRES_USER=user_service_user
       - POSTGRES_PASSWORD=yourpassword
       - POSTGRES_HOST=user_service_db # Rất quan trọng: trỏ đúng service DB
       - POSTGRES_PORT=5432
+  
+  consul:
+    image: consul:1.1.0
+    container_name: consul
+    ports:
+      - "8500:8500"  # Giao diện Web UI
+      - "8600:8600/udp"  # DNS server (nếu dùng)
+    command: agent -dev -client=0.0.0.0
+
 
 volumes:
   user_service_postgres_data:
