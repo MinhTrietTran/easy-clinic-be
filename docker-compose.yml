@@ -39,6 +39,14 @@ services:
       - "8600:8600/udp"  # DNS server (nếu dùng)
     command: agent -dev -client=0.0.0.0
 
+  resolver_service:
+    build: ./resolver_service
+    container_name: resolver_service
+    ports:
+    - "7070:7000"
+    environment:
+    - ENV=local  # hoặc prod nếu deploy thật
+  
 
 volumes:
   user_service_postgres_data:
