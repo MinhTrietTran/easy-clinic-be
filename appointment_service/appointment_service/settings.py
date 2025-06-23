@@ -10,6 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -75,16 +78,22 @@ WSGI_APPLICATION = 'appointment_service.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+import os
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'clinicdb',           # Tên DB 
-        'USER': 'postgres',             # Tài khoản
-        'PASSWORD': '1304Cris',    # Mật khẩu
-        'HOST': 'localhost',            # Hoặc 127.0.0.1
-        'PORT': '5432',                 # Mặc định là 5432
+        'NAME': os.environ.get('DB_NAME', 'easy_clinic'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'insecure-fallback-secret')
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+
 
 
 

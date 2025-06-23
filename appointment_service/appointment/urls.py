@@ -5,7 +5,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path('appointments/', AppointmentListCreateView.as_view()),
+    path('appointment_service/', AppointmentListCreateView.as_view()),
     path('appointments/<int:pk>/', AppointmentDetailView.as_view()),
     path('schedules/', ScheduleListCreateView.as_view()),
     path('shifts/', ShiftListCreateView.as_view()),
