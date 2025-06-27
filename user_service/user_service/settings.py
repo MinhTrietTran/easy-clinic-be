@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
 from pathlib import Path
 import os
 
@@ -129,3 +128,14 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.CustomUser'
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'USER_ID_FIELD': 'user_id',  # Sử dụng user_id thay vì id
+    'USER_ID_CLAIM': 'user_id',  # Thêm user_id vào payload của JWT
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Thời gian sống của Access Token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Thời gian sống của Refresh Token
+    'ROTATE_REFRESH_TOKENS': False,                 # Không xoay vòng Refresh Token
+    'BLACKLIST_AFTER_ROTATION': True,               # Blacklist Refresh Token sau khi xoay vòng
+}

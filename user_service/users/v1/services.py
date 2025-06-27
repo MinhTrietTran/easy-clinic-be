@@ -1,5 +1,7 @@
+from django.contrib.auth import authenticate
 from ..models.user import CustomUser
 from ..models.patient import Patient
+
 
 def register_user(data):
     user = CustomUser.objects.create_user(
@@ -21,4 +23,12 @@ def register_user(data):
             allergies=data.get('allergies',''),
             chronic_diseases=data.get('choronic_diseases'),
         )
+    return user
+
+
+def login(data):
+    email = data.get('email')
+    password = data.get('password')
+    # Authenticate
+    user = authenticate(email=email, password=password)
     return user
