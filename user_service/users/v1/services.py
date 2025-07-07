@@ -34,3 +34,39 @@ def login(data):
     user = authenticate(email=email, password=password)
     return user
 
+def get_me(user):
+    data = {
+        "user_id": str(user.user_id),
+        "email": user.email,
+        "phone": user.role,
+        "created_at": user.created_at,
+    }
+    if user.role == "patient":
+        try:
+            patient = Patient.objects.get(user=user)
+            data.update({
+                "first_name": patient.first_name,
+                "last_name": patient.last_name,
+                "gender": "female" if patient.gender else "male",
+                "dob": patient.DOB,
+                "address": patient.address,
+                "allergies": patient.allergies,
+                "chronic_diseases": patient.chronic_diseases,
+            })
+        except Patient.DoesNotExist:
+            data["detail"] = "Patient profile not found"
+    elif user.role == "doctor":
+        try:
+            doctor = Doctor.objects.get(user=user)
+            data.update({
+                "first_name": doctor.first_name,
+                "last_name": doctor.last_name,
+                "department": doctor.department,
+                "cost": doctor.cost,
+                "is_active": doctor.is_active,
+            })
+        except Doctor.DoesNotExist:
+            data['detail'] = "Doctor profile not found"
+    return data
+    
+

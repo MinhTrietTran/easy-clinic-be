@@ -139,3 +139,9 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': False,                 # Không xoay vòng Refresh Token
     'BLACKLIST_AFTER_ROTATION': True,               # Blacklist Refresh Token sau khi xoay vòng
 }
+# Cai xac thuc mac dinh cho cho toan bo api
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}

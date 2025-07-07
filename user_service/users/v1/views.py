@@ -3,7 +3,16 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from .tokens import CustomRefreshToken
-from .services import register_user, login
+from .services import register_user, login, get_me
+from rest_framework.permissions import IsAuthenticated
+
+# ...existing code...
+
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        data = get_me(request.user)
+        return data
 
 
 # Create your views here.
@@ -30,3 +39,8 @@ class LoginView(APIView):
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
     
 
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        data = get_me(request.user)
+        return Response(data)
