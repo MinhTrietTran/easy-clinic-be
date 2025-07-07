@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
+from .tokens import CustomRefreshToken
 from .services import register_user, login
 
 
@@ -21,10 +21,12 @@ class LoginView(APIView):
         user = login(request.data)
         if user:
             # Create jwt
-            refresh = RefreshToken.for_user(user)
+            refresh = CustomRefreshToken.for_user(user)
             return Response({
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
-                "role": user.role # Return user role
+                # "role": user.role # Return user role
             }, status=status.HTTP_200_OK)
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+

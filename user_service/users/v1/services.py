@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 from ..models.user import CustomUser
 from ..models.patient import Patient
+from ..models.doctor import Doctor
 
 
 def register_user(data):
@@ -32,3 +33,4 @@ def login(data):
     # Authenticate
     user = authenticate(email=email, password=password)
     return user
+
