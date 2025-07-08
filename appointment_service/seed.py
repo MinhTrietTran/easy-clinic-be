@@ -13,7 +13,7 @@ Appointment.objects.all().delete()
 Schedule.objects.all().delete()
 Shift.objects.all().delete()
 
-print(" Đã xóa dữ liệu cũ.")
+print("✅ Đã xóa dữ liệu cũ.")
 
 # Seed Shift
 shift1 = Shift.objects.create(time_start=time(8, 0), time_end=time(12, 0), is_archived=False)
@@ -63,4 +63,4 @@ Appointment.objects.create(
     shift_id=shift2.shift_id
 )
 
-print(" Seed thành công dữ liệu cho Appointments, Shifts và Schedules.")
+print("✅ Seed thành công dữ liệu mock cho Appointments, Shifts và Schedules.")

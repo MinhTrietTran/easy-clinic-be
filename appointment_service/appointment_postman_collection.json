@@ -1,0 +1,198 @@
+{
+  "info": {
+    "name": "Easy Clinic - Appointment API",
+    "_postman_id": "easy-clinic-appointment",
+    "description": "Collection for all appointment-related endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List Appointments",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5002/appointments/",
+          "host": [
+            "localhost"
+          ],
+          "port": "5002",
+          "path": [
+            "appointments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Appointment",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "http://localhost:5002/appointments/",
+          "host": [
+            "localhost"
+          ],
+          "port": "5002",
+          "path": [
+            "appointments"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"doctor_id\": \"doctor-1\",\n  \"patient_id\": \"patient-1\",\n  \"time_start\": \"2025-07-10T09:00:00Z\",\n  \"end_time\": \"2025-07-10T09:30:00Z\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Get Appointment by ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5002/appointments/1/",
+          "host": [
+            "localhost"
+          ],
+          "port": "5002",
+          "path": [
+            "appointments",
+            "1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Appointment with Doctor/Patient Info",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5002/appointments/1/with-info/",
+          "host": [
+            "localhost"
+          ],
+          "port": "5002",
+          "path": [
+            "appointments",
+            "1",
+            "with-info"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Auto Assign Doctor",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "http://localhost:5002/appointments/auto-assign/",
+          "host": [
+            "localhost"
+          ],
+          "port": "5002",
+          "path": [
+            "appointments",
+            "auto-assign"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"department\": \"N\\u1ed9i\",\n  \"patient_id\": \"patient-1\",\n  \"time_start\": \"2025-07-11T09:00:00Z\",\n  \"end_time\": \"2025-07-11T09:30:00Z\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Update Appointment Status",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "http://localhost:5002/appointments/1/status/",
+          "host": [
+            "localhost"
+          ],
+          "port": "5002",
+          "path": [
+            "appointments",
+            "1",
+            "status"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"confirmed\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Reschedule Appointment",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "http://localhost:5002/appointments/1/reschedule/",
+          "host": [
+            "localhost"
+          ],
+          "port": "5002",
+          "path": [
+            "appointments",
+            "1",
+            "reschedule"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"new_time_start\": \"2025-07-15T10:00:00Z\",\n  \"new_end_time\": \"2025-07-15T10:30:00Z\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "List Schedules",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5002/schedules/",
+          "host": [
+            "localhost"
+          ],
+          "port": "5002",
+          "path": [
+            "schedules"
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Shifts",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5002/shifts/",
+          "host": [
+            "localhost"
+          ],
+          "port": "5002",
+          "path": [
+            "shifts"
+          ]
+        }
+      }
+    }
+  ]
+}

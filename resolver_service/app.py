@@ -6,7 +6,7 @@ app = Flask(__name__)
 SERVICE_PUBLIC_MAP = {
     "user_service": {"address": "localhost", "port": 5001},
     # Add more services here as needed
-    # "appointment_service": {"address": "localhost", "port": 5002},
+    "appointment_service": {"address": "localhost", "port": 5002},
     # "medical_record_service": {"address": "localhost", "port": 5003},
     # "analytics_service": {"address": "localhost", "port": 5004},
 }

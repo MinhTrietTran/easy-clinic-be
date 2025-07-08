@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'appointment',
     'rest_framework',
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [
@@ -83,13 +84,14 @@ import os
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'easy_clinic'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'NAME': os.environ.get('POSTGRES_DB', 'appointment_service_db'),
+        'USER': os.environ.get('POSTGRES_USER', 'appointment_user'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'yourpassword'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'appointment_service_db'),
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
     }
 }
+
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'insecure-fallback-secret')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
@@ -137,3 +139,4 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user_service_app:5001")
