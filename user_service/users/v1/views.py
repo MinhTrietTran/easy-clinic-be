@@ -3,8 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from .tokens import CustomRefreshToken
-from .services import register_user, login, get_me
+from .services import register_user, login, get_me, update_user_profile
 from rest_framework.permissions import IsAuthenticated
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 # ...existing code...
 
@@ -12,7 +14,14 @@ class MeView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
         data = get_me(request.user)
-        return data
+        return Response(data)
+
+    def put(self, request):
+        try:
+            updated_data = update_user_profile(request.user, request.data)
+            return Response(updated_data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # Create your views here.
@@ -24,7 +33,8 @@ class RegisterView(APIView):
             return Response({"message":"User registered successfully"}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"error":str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+        
+@method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
     def post(self, request):
         user = login(request.data)
@@ -37,10 +47,3 @@ class LoginView(APIView):
                 # "role": user.role # Return user role
             }, status=status.HTTP_200_OK)
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-    
-
-class MeView(APIView):
-    permission_classes = [IsAuthenticated]
-    def get(self, request):
-        data = get_me(request.user)
-        return Response(data)

@@ -68,5 +68,37 @@ def get_me(user):
         except Doctor.DoesNotExist:
             data['detail'] = "Doctor profile not found"
     return data
+
+def update_user_profile(user, data):
+    # Update CustomUser fields if provided
+    user.phone = data.get('phone', user.phone)
+    user.save()
+
+    if user.role == "patient":
+        try:
+            patient = Patient.objects.get(user=user)
+            patient.first_name = data.get('first_name', patient.first_name)
+            patient.last_name = data.get('last_name', patient.last_name)
+            patient.gender = True if data.get('gender', '').lower() == 'female' else False
+            patient.DOB = data.get('dob', patient.DOB)
+            patient.address = data.get('address', patient.address)
+            patient.allergies = data.get('allergies', patient.allergies)
+            patient.chronic_diseases = data.get('chronic_diseases', patient.chronic_diseases)
+            patient.save()
+        except Patient.DoesNotExist:
+            raise Exception("Patient profile not found")
+    elif user.role == "doctor":
+        try:
+            doctor = Doctor.objects.get(user=user)
+            doctor.first_name = data.get('first_name', doctor.first_name)
+            doctor.last_name = data.get('last_name', doctor.last_name)
+            doctor.department = data.get('department', doctor.department)
+            doctor.cost = data.get('cost', doctor.cost)
+            doctor.is_active = data.get('is_active', doctor.is_active)
+            doctor.save()
+        except Doctor.DoesNotExist:
+            raise Exception("Doctor profile not found")
+
+    return get_me(user) # Return updated data using existing get_me function
     
 
