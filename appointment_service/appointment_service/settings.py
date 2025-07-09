@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'appointment',
     'rest_framework',
     "drf_yasg",
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -53,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'appointment_service.urls'
@@ -140,3 +142,9 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user_service_app:5001")
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # Thay đổi hoặc thêm domain frontend của bạn nếu cần
+]
+
+CORS_ALLOW_CREDENTIALS = True  # Nếu bạn cần gửi cookie hoặc Authorization header
