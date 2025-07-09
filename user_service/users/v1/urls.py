@@ -1,5 +1,8 @@
 from django.urls import path
-from .views import RegisterView, LoginView, MeView
+from .views import (
+    RegisterView, LoginView, MeView,
+    DoctorListByDepartmentView, DoctorDetailView, PatientDetailView
+)
 from rest_framework_simplejwt.views import ( # type: ignore
     TokenRefreshView,
     TokenVerifyView,
@@ -13,4 +16,9 @@ urlpatterns = [
     # JWT built-in
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+
+    # Doctor and Patient details
+    path('doctors/', DoctorListByDepartmentView.as_view(), name='doctor-list-by-department'),
+    path('doctors/<int:doctor_id>/', DoctorDetailView.as_view(), name='doctor-detail'),
+    path('patients/<int:patient_id>/', PatientDetailView.as_view(), name='patient-detail'),
 ]

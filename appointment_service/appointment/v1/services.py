@@ -1,16 +1,21 @@
-import requests # type: ignore
+from appointment_service.service_discovery import get_service_address
+import requests
 from django.conf import settings
 from datetime import datetime
 from ..models import Appointment
 from django.db import transaction
 
 class UserServiceClient:
-    BASE_URL = settings.USER_SERVICE_URL  # e.g., "http://user-service:8000"
+    @staticmethod
+    def get_base_url():
+        address, port = get_service_address("user_service")
+        return f"http://{address}:{port}"
 
     @staticmethod
     def get_doctors_by_department(department):
         try:
-            res = requests.get(f"{UserServiceClient.BASE_URL}/doctors/?department={department}")
+            base_url = UserServiceClient.get_base_url()
+            res = requests.get(f"{base_url}/api/v1/users/doctors/?department={department}")
             if res.status_code == 200:
                 return res.json()
         except Exception:
@@ -20,7 +25,8 @@ class UserServiceClient:
     @staticmethod
     def get_doctor_info(doctor_id):
         try:
-            res = requests.get(f"{UserServiceClient.BASE_URL}/doctors/{doctor_id}")
+            base_url = UserServiceClient.get_base_url()
+            res = requests.get(f"{base_url}/api/v1/users/doctors/{doctor_id}/")
             if res.status_code == 200:
                 return res.json()
         except Exception:
@@ -30,7 +36,8 @@ class UserServiceClient:
     @staticmethod
     def get_patient_info(patient_id):
         try:
-            res = requests.get(f"{UserServiceClient.BASE_URL}/patients/{patient_id}")
+            base_url = UserServiceClient.get_base_url()
+            res = requests.get(f"{base_url}/api/v1/users/patients/{patient_id}/")
             if res.status_code == 200:
                 return res.json()
         except Exception:
@@ -108,6 +115,7 @@ class AppointmentService:
             {"id": "doctor-1", "name": "Dr. A"},
             {"id": "doctor-2", "name": "Dr. B"},
         ]
+        #Gọi api user
         doctors = UserServiceClient.get_doctors_by_department(department)
         if not doctors:
             doctors = mock_doctors
