@@ -1,7 +1,7 @@
-import requests
+import requests # type: ignore
 from django.conf import settings
 from datetime import datetime
-from .models import Appointment
+from ..models import Appointment
 from django.db import transaction
 
 class UserServiceClient:
