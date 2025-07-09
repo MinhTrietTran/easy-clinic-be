@@ -1,5 +1,5 @@
 from django.apps import AppConfig
-from ..consul_register import register_to_consul
+from consul_register import register_to_consul
 
 
 class UsersConfig(AppConfig):
