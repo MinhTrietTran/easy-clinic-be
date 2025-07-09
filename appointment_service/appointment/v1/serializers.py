@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Appointment, Schedule, Shift
+from ..models import Appointment, Schedule, Shift
 
 
 class ScheduleSerializer(serializers.ModelSerializer):

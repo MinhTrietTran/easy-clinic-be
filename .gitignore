@@ -33,4 +33,4 @@ node_modules/
 .ipynb_checkpoints/
 
 # ide evirontment config
-.idea
+.idea/
