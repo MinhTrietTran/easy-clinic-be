@@ -109,6 +109,7 @@ class AppointmentService:
             raise ValueError("Không tìm thấy cuộc hẹn")
 
     @staticmethod
+    # def auto_assign_doctor(department, time_start, end_time):
     def auto_assign_doctor(department, time_start, end_time):
         # mock data nếu users chưa có
         mock_doctors = [

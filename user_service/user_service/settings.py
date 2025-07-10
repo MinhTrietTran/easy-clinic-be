@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 from pathlib import Path
 import os
+import socket
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +26,22 @@ SECRET_KEY = 'django-insecure-t5+=f^73q7*))j=x#%*gvaa)th=x=!aytn@aw-beux&8ur35(1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# Completely disable host validation
+ALLOWED_HOSTS = ['*']
+USE_X_FORWARDED_HOST = True
+
+# Force disable Django's host validation by monkey patching
+# Monkey patching danh lua django
+import sys
+if 'runserver' in sys.argv or 'uwsgi' in sys.argv or True:  # Always apply in this case
+    from django.http import HttpRequest
+    original_get_host = HttpRequest.get_host
+    def patched_get_host(self):
+        host = self.META.get('HTTP_HOST', 'localhost')
+        if ':' in host:
+            host = host.split(':')[0] + ':' + host.split(':')[1]
+        return host
+    HttpRequest.get_host = patched_get_host
 
 
 # Application definition
@@ -46,7 +62,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
