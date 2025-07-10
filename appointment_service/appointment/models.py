@@ -50,8 +50,9 @@ class Appointment(models.Model):
     amount_pay = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
-    patient_id = models.UUIDField()
-    doctor_id = models.UUIDField()
+    # Đổi từ UUIDField sang IntegerField cho patient_id và doctor_id
+    patient_id = models.IntegerField()
+    doctor_id = models.IntegerField()
 
     # liên kết với ca hoặc khung giờ
     schedule = models.ForeignKey('Schedule', on_delete=models.SET_NULL, null=True, blank=True)
