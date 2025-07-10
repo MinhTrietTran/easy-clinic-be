@@ -102,3 +102,75 @@ def update_user_profile(user, data):
     return get_me(user) # Return updated data using existing get_me function
     
 
+def get_doctors_by_department(department):
+    doctors = Doctor.objects.filter(department=department)
+    data = [
+        {
+            "id": doctor.pk, # khóa chính bảng doctor
+            "first_name": doctor.first_name,
+            "last_name": doctor.last_name,
+            "department": doctor.department,
+            "cost": doctor.cost,
+            "is_active": doctor.is_active,
+        }
+        for doctor in doctors
+    ]
+    return data
+
+def get_doctor_info(doctor_id):
+    try:
+        doctor = Doctor.objects.only(
+            "pk", "first_name", "last_name", "department", "cost", "is_active"
+        ).get(pk=doctor_id)
+        doctor_data = {
+            "id": doctor.pk,
+            "first_name": doctor.first_name,
+            "last_name": doctor.last_name,
+            "department": doctor.department,
+            "cost": doctor.cost,
+            "is_active": doctor.is_active,
+        }
+        return doctor_data
+    except Doctor.DoesNotExist:
+        return None  # or return {"detail": "Doctor not found"}
+
+def get_patient_info(patient_id):
+    try:
+        patient = Patient.objects.only(
+            "pk", "first_name", "last_name", "gender", "DOB", "address", "allergies", "chronic_diseases"
+        ).get(pk=patient_id)
+        patient_data = {
+            "id": patient.pk,
+            "first_name": patient.first_name,
+            "last_name": patient.last_name,
+            "gender": patient.gender,
+            "dob": patient.DOB,
+            "address": patient.address,
+            "allergies": patient.allergies,
+            "chronic_diseases": patient.chronic_diseases,
+        }
+        return patient_data
+    except Patient.DoesNotExist:
+        return None
+
+def get_patient_id_from_user(user):
+    """
+    Service function để lấy patient_id từ user object
+    """
+    # Kiểm tra user có phải là patient không
+    if user.role != 'patient':
+        raise ValueError(f"User is not a patient. Current role: {user.role}")
+    
+    try:
+        # Lấy patient record từ user
+        patient = Patient.objects.get(user=user)
+        return {
+            "patient_id": patient.pk,
+            "user_id": str(user.user_id),
+            "email": user.email,
+            "full_name": f"{patient.first_name} {patient.last_name}".strip(),
+            "phone": user.phone
+        }
+    except Patient.DoesNotExist:
+        raise ValueError("Patient profile not found for this user")
+

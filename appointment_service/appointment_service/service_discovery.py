@@ -5,9 +5,8 @@ def get_service_address(service_name, consul_host="consul", consul_port=8500):
     index, nodes = c.health.service(service_name, passing=True)
     if nodes:
         node = nodes[0]
-        address = node['Service']['Address']
         port = node['Service']['Port']
-        return address, port
+        return service_name, port # Trong docker gọi nhau qua tên service
     raise Exception("Service not found or not healthy")
 
 def is_service_alive(service_name, consul_host="consul", consul_port=8500):

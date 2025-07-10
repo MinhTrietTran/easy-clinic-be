@@ -4,10 +4,10 @@ from .views import (
     AppointmentDetailView,
     AppointmentDetailWithUserInfo,
     AppointmentAutoAssignView,
-    AppointmentStatusUpdateView,
     AppointmentRescheduleView,
     ScheduleListCreateView,
     ShiftListCreateView,
+    AppointmentStatusView,
 )
 
 urlpatterns = [
@@ -16,7 +16,7 @@ urlpatterns = [
     path('appointments/auto-assign/', AppointmentAutoAssignView.as_view(), name='appointment-auto-assign'),  # POST
     path('appointments/<int:pk>/', AppointmentDetailView.as_view(), name='appointment-detail'),  # GET, PUT, DELETE
     path('appointments/<int:pk>/with-info/', AppointmentDetailWithUserInfo.as_view(), name='appointment-detail-info'),  # GET
-    path('appointments/<int:pk>/status/', AppointmentStatusUpdateView.as_view(), name='appointment-status-update'),  # PATCH/PUT
+    path('appointments/<uuid:pk>/status/', AppointmentStatusView.as_view(), name='appointment-status'),  # GET
     path('appointments/<int:pk>/reschedule/', AppointmentRescheduleView.as_view(), name='appointment-reschedule'),  # PATCH/PUT
 
     # Schedule & Shift APIs

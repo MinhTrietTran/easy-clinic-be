@@ -141,7 +141,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user_service_app:5001")
+# USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user_service_app:5001")
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Thay đổi hoặc thêm domain frontend của bạn nếu cần
