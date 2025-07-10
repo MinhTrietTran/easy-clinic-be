@@ -13,14 +13,36 @@ class AppointmentListCreateView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = AppointmentSerializer(data=request.data)
-        if serializer.is_valid():
-            try:
-                appointment = AppointmentService.create_appointment(serializer.validated_data)
-                return Response(AppointmentSerializer(appointment).data, status=status.HTTP_201_CREATED)
-            except ValueError as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        """
+        Tạo appointment và trả về ngay, xử lý assign doctor ở background
+        """
+        # Lấy token từ header
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        if not auth_header.startswith('Bearer '):
+            return Response({"error": "Missing or invalid Authorization header"}, 
+                          status=status.HTTP_401_UNAUTHORIZED)
+        
+        token = auth_header.split(' ')[1]
+        
+        # Thêm token vào data
+        data = request.data.copy()
+        data["token"] = token
+        
+        try:
+            # Tạo appointment và trả về ngay
+            appointment_result = AppointmentService.create_appointment(data)
+            
+            # Response ngay cho FE
+            return Response({
+                **appointment_result,
+                "processing_note": "Doctor assignment is being processed in the background. You will receive an email confirmation shortly."
+            }, status=status.HTTP_201_CREATED)
+            
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": f"Lỗi không xác định: {str(e)}"}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class AppointmentDetailView(APIView):
@@ -88,16 +110,17 @@ class AppointmentAutoAssignView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AppointmentStatusUpdateView(APIView):
-    def post(self, request, pk):
-        new_status = request.data.get("status")
-        if not new_status:
-            return Response({"error": "Thiếu trạng thái mới"}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            appointment = AppointmentService.update_appointment_status(pk, new_status)
-            return Response(AppointmentSerializer(appointment).data)
-        except ValueError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+class AppointmentStatusView(APIView):
+    def get(self, request, pk):
+        """
+        API để FE check status của appointment
+        """
+        result = AppointmentService.get_appointment_status(pk)
+        
+        if result:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Appointment not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class AppointmentRescheduleView(APIView):

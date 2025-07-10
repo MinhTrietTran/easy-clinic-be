@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     RegisterView, LoginView, MeView,
-    DoctorListByDepartmentView, DoctorDetailView, PatientDetailView
+    DoctorListByDepartmentView, DoctorDetailView, PatientDetailView, GetPatientIdView
 )
 from rest_framework_simplejwt.views import ( # type: ignore
     TokenRefreshView,
@@ -21,4 +21,5 @@ urlpatterns = [
     path('doctors/', DoctorListByDepartmentView.as_view(), name='doctor-list-by-department'),
     path('doctors/<int:doctor_id>/', DoctorDetailView.as_view(), name='doctor-detail'),
     path('patients/<int:patient_id>/', PatientDetailView.as_view(), name='patient-detail'),
+    path('patient/me/id/', GetPatientIdView.as_view(), name='get-patient-id'),
 ]

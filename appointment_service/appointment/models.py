@@ -52,7 +52,7 @@ class Appointment(models.Model):
 
     # Đổi từ UUIDField sang IntegerField cho patient_id và doctor_id
     patient_id = models.IntegerField()
-    doctor_id = models.IntegerField()
+    doctor_id = models.CharField(max_length=255, null=True, blank=True)  # Cho phép null
 
     # liên kết với ca hoặc khung giờ
     schedule = models.ForeignKey('Schedule', on_delete=models.SET_NULL, null=True, blank=True)

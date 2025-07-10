@@ -77,3 +77,24 @@ class PatientDetailView(APIView):
         if not data:
             return Response({"error": "Patient not found"}, status=status.HTTP_404_NOT_FOUND)
         return Response(data)
+
+class GetPatientIdView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        API trả về patient_id từ token trong header
+        Header: Authorization: Bearer <access_token>
+        """
+        try:
+            data = get_patient_id_from_user(request.user)
+            return Response(data, status=status.HTTP_200_OK)
+            
+        except ValueError as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_403_FORBIDDEN if "not a patient" in str(e) else status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "error": f"An unexpected error occurred: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
