@@ -79,7 +79,7 @@ def receive_prescription_data(request):
                 return f"http://{address}:{port}"
             base_url = get_base_url()
 
-            user_api_url = f'{base_url}/api/v1/users/patients/{patient_id}/' 
+            user_api_url = f'{base_url}/api/v1/users/patient/{patient_id}/email' 
             response = requests.get(user_api_url)
             response.raise_for_status()  # Raise exception for 4xx/5xx errors
             user_data = response.json()
