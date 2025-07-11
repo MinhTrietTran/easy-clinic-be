@@ -1,0 +1,10 @@
+django
+requests
+celery
+kombu
+amqp
+pika
+python-decouple
+django-celery-beat
+psycopg2-binary
+python-consul==1.1.0
