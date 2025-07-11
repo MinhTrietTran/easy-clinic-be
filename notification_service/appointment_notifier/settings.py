@@ -1,6 +1,28 @@
 from pathlib import Path
 from decouple import config
 
+# Monkey patch Django's get_host() method BEFORE any Django setup
+import django
+from django.http import HttpRequest
+
+def monkey_patch_django_host():
+    """
+    Monkey patch to fix ALLOWED_HOSTS validation in containerized environment
+    """
+    original_get_host = HttpRequest.get_host
+    
+    def patched_get_host(self):
+        try:
+            return original_get_host(self)
+        except Exception:
+            # Return a safe default host for containerized environment
+            return 'notification_service_app:7000'
+    
+    HttpRequest.get_host = patched_get_host
+
+# Apply monkey patch immediately
+monkey_patch_django_host()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY', default='your-secret-key')

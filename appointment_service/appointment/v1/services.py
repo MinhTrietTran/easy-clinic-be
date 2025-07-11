@@ -138,13 +138,16 @@ class AppointmentService:
             "message": "Appointment created successfully. Doctor assignment in progress..."
         }
         
-        # 7. Xử lý assign doctor bất đồng bộ
-        threading.Thread(
+        # 7. Background assign doctor
+        import threading
+        thread = threading.Thread(
             target=AppointmentService._process_doctor_assignment,
-            args=(appointment.appointment_id, department),
-            daemon=True
-        ).start()
-        
+            args=(str(appointment.appointment_id), department)
+        )
+        thread.daemon = True
+        thread.start()
+        print(f"🚀 Started background thread for appointment {appointment.appointment_id}")
+
         return result
 
     @staticmethod
@@ -195,8 +198,64 @@ class AppointmentService:
             
             print(f"Doctor assigned successfully for appointment {appointment_id}")
             
+            # 🔔 GỬI THÔNG BÁO CONFIRMATION QUA NOTIFICATION SERVICE
+            try:
+                AppointmentService._send_appointment_notification(appointment)
+                print(f"Notification sent for appointment {appointment_id}")
+            except Exception as e:
+                print(f"Failed to send notification for appointment {appointment_id}: {str(e)}")
+                # Không raise exception để không ảnh hưởng đến flow chính
+        
         except Exception as e:
             print(f"Error assigning doctor for appointment {appointment_id}: {str(e)}")
+
+    @staticmethod
+    def _send_appointment_notification(appointment):
+        """
+        Gửi thông báo appointment confirmation qua notification service
+        """
+        try:
+            from appointment_service.service_discovery import get_service_address
+            import requests
+            
+            # Lấy địa chỉ notification service
+            # address, port = get_service_address("notification_service")
+            notification_url = f"http://notification_service:7000/api/v1/receive/appointments/"
+            
+            # Chuẩn bị data để gửi
+            notification_data = {
+                "appointment_id": str(appointment.appointment_id),
+                "time_start": appointment.time_start.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                "patient_id": appointment.patient_id
+            }
+            
+            print(f"Sending notification to: {notification_url}")
+            print(f"Notification data: {notification_data}")
+            
+            # Gửi POST request đến notification service
+            response = requests.post(
+                notification_url,
+                json=notification_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10  # 10 seconds timeout
+            )
+            
+            if response.status_code in [200, 201]:
+                print(f"✅ Notification sent successfully for appointment {appointment.appointment_id}")
+                return True
+            else:
+                print(f"❌ Notification failed with status {response.status_code}: {response.text}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            print(f"⏰ Notification timeout for appointment {appointment.appointment_id}")
+            return False
+        except requests.exceptions.ConnectionError:
+            print(f"🔌 Cannot connect to notification service for appointment {appointment.appointment_id}")
+            return False
+        except Exception as e:
+            print(f"💥 Unexpected error sending notification for appointment {appointment.appointment_id}: {str(e)}")
+            return False
 
     @staticmethod
     @transaction.atomic
