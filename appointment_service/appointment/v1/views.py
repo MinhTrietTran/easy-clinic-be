@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from ..models import Appointment, Schedule, Shift
 from .serializers import AppointmentSerializer, ScheduleSerializer, ShiftSerializer
-from .services import AppointmentService
+from .services import AppointmentService, UserServiceClient  # Thêm UserServiceClient
 
 
 class AppointmentListCreateView(APIView):
@@ -49,10 +49,34 @@ class AppointmentDetailView(APIView):
     def get(self, request, pk):
         try:
             appointment = Appointment.objects.get(pk=pk)
+            
+            # Lấy thông tin patient
+            patient_info = None
+            if appointment.patient_id:
+                patient_info = UserServiceClient.get_patient_info(appointment.patient_id)
+            
+            # Lấy thông tin doctor nếu đã được assign
+            doctor_info = None
+            if appointment.doctor_id:
+                doctor_info = UserServiceClient.get_doctor_info(appointment.doctor_id)
+            
+            # Serialize appointment data
             serializer = AppointmentSerializer(appointment)
-            return Response(serializer.data)
+            
+            # Thêm thông tin user vào response
+            response_data = serializer.data
+            response_data.update({
+                "patient_info": patient_info,
+                "doctor_info": doctor_info
+            })
+            
+            return Response(response_data)
+            
         except Appointment.DoesNotExist:
             return Response({"error": "Appointment not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": f"Lỗi khi lấy thông tin appointment: {str(e)}"}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def put(self, request, pk):
         try:
@@ -64,7 +88,24 @@ class AppointmentDetailView(APIView):
         if serializer.is_valid():
             try:
                 serializer.save()
-                return Response(serializer.data)
+                
+                # Thêm user info vào response sau khi update
+                patient_info = None
+                if appointment.patient_id:
+                    patient_info = UserServiceClient.get_patient_info(appointment.patient_id)
+                
+                doctor_info = None
+                if appointment.doctor_id:
+                    doctor_info = UserServiceClient.get_doctor_info(appointment.doctor_id)
+                
+                response_data = serializer.data
+                response_data.update({
+                    "patient_info": patient_info,
+                    "doctor_info": doctor_info
+                })
+                
+                return Response(response_data)
+                
             except ValueError as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -80,10 +121,16 @@ class AppointmentDetailView(APIView):
 
 class AppointmentDetailWithUserInfo(APIView):
     def get(self, request, pk):
-        result = AppointmentService.get_appointment_with_user_info(pk)
+        """
+        Lấy chi tiết appointment với thông tin user (alias cho AppointmentDetailView)
+        """
+        # Sử dụng lại logic từ service
+        result = AppointmentService.get_appointment_detail(pk)
+        
         if result:
-            return Response(result)
-        return Response({"error": "Appointment not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Appointment not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class AppointmentAutoAssignView(APIView):
@@ -162,3 +209,171 @@ class ShiftListCreateView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AppointmentsByDoctorView(APIView):
+    def get(self, request, doctor_id):
+        """
+        Lấy danh sách appointments theo doctor_id
+        Query parameters:
+        - status: filter theo status (optional)
+        - date: filter theo ngày cụ thể (YYYY-MM-DD) (optional)
+        """
+        status_filter = request.query_params.get('status')
+        date_filter = request.query_params.get('date')
+        
+        try:
+            if date_filter:
+                # Lấy appointments trong ngày cụ thể
+                appointments = AppointmentService.get_appointments_by_doctor_and_date(
+                    doctor_id, date_filter, status_filter
+                )
+            else:
+                # Lấy tất cả appointments của doctor
+                appointments = AppointmentService.get_appointments_by_doctor(
+                    doctor_id, status_filter
+                )
+            
+            return Response({
+                "doctor_id": doctor_id,
+                "total_appointments": len(appointments),
+                "filters": {
+                    "status": status_filter,
+                    "date": date_filter
+                },
+                "appointments": appointments
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                "error": f"Lỗi khi lấy appointments: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class DoctorScheduleView(APIView):
+    def get(self, request, doctor_id):
+        """
+        Lấy lịch làm việc của doctor theo tuần/tháng
+        Query parameters:
+        - start_date: ngày bắt đầu (YYYY-MM-DD)
+        - end_date: ngày kết thúc (YYYY-MM-DD)
+        - status: filter theo status
+        """
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        status_filter = request.query_params.get('status')
+        
+        try:
+            from datetime import datetime, timedelta
+            
+            # Default: lấy 7 ngày tới
+            if not start_date:
+                start_date = datetime.now().date()
+            else:
+                start_date = datetime.fromisoformat(start_date).date()
+            
+            if not end_date:
+                end_date = start_date + timedelta(days=7)
+            else:
+                end_date = datetime.fromisoformat(end_date).date()
+            
+            # Query appointments trong khoảng thời gian
+            start_datetime = datetime.combine(start_date, datetime.min.time())
+            end_datetime = datetime.combine(end_date, datetime.max.time())
+            
+            appointments = Appointment.objects.filter(
+                doctor_id=doctor_id,
+                time_start__gte=start_datetime,
+                time_start__lte=end_datetime
+            )
+            
+            if status_filter:
+                appointments = appointments.filter(status=status_filter)
+            
+            appointments = appointments.order_by('time_start')
+            
+            # Group theo ngày
+            schedule = {}
+            for appointment in appointments:
+                date_key = appointment.time_start.date().isoformat()
+                if date_key not in schedule:
+                    schedule[date_key] = []
+                
+                patient_info = UserServiceClient.get_patient_info(appointment.patient_id)
+                
+                schedule[date_key].append({
+                    "appointment_id": str(appointment.appointment_id),
+                    "time_start": appointment.time_start,
+                    "end_time": appointment.end_time,
+                    "status": appointment.status,
+                    "status_display": appointment.get_status_display(),
+                    "patient_id": appointment.patient_id,
+                    "patient_info": patient_info,
+                    "total_cost": appointment.total_cost
+                })
+            
+            return Response({
+                "doctor_id": doctor_id,
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "total_appointments": appointments.count(),
+                "schedule": schedule
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                "error": f"Lỗi khi lấy lịch doctor: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AppointmentsByPatientView(APIView):
+    def get(self, request, patient_id):
+        """
+        Lấy danh sách appointments theo patient_id
+        Query parameters:
+        - status: filter theo status (optional)
+        - limit: số lượng appointments (default: 10)
+        """
+        status_filter = request.query_params.get('status')
+        limit = int(request.query_params.get('limit', 10))
+        
+        try:
+            appointments = AppointmentService.get_appointments_by_patient(
+                patient_id, status_filter, limit
+            )
+            
+            return Response({
+                "patient_id": patient_id,
+                "total_appointments": len(appointments),
+                "limit": limit,
+                "appointments": appointments
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                "error": f"Lỗi khi lấy appointments: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AppointmentStatisticsView(APIView):
+    def get(self, request):
+        """
+        Lấy thống kê tổng quan appointments
+        """
+        try:
+            stats = AppointmentService.get_appointment_statistics()
+            return Response(stats, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "error": f"Lỗi khi lấy thống kê: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class DoctorStatisticsView(APIView):
+    def get(self, request, doctor_id):
+        """
+        Lấy thống kê của doctor cụ thể
+        """
+        try:
+            stats = AppointmentService.get_doctor_statistics(doctor_id)
+            return Response(stats, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "error": f"Lỗi khi lấy thống kê doctor: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

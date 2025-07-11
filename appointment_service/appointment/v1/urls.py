@@ -8,6 +8,11 @@ from .views import (
     ScheduleListCreateView,
     ShiftListCreateView,
     AppointmentStatusView,
+    AppointmentsByDoctorView,      # Thêm
+    DoctorScheduleView,            # Thêm
+    AppointmentsByPatientView,     # Thêm
+    AppointmentStatisticsView,     # Thêm
+    DoctorStatisticsView,          # Thêm
 )
 
 urlpatterns = [
@@ -18,7 +23,18 @@ urlpatterns = [
     path('appointments/<int:pk>/with-info/', AppointmentDetailWithUserInfo.as_view(), name='appointment-detail-info'),  # GET
     path('appointments/<uuid:pk>/status/', AppointmentStatusView.as_view(), name='appointment-status'),  # GET
     path('appointments/<int:pk>/reschedule/', AppointmentRescheduleView.as_view(), name='appointment-reschedule'),  # PATCH/PUT
-
+    
+    # Doctor Appointments APIs
+    path('appointments/doctor/<str:doctor_id>/', AppointmentsByDoctorView.as_view(), name='doctor-appointments'),
+    path('doctors/<str:doctor_id>/schedule/', DoctorScheduleView.as_view(), name='doctor-schedule'),
+    path('doctors/<str:doctor_id>/statistics/', DoctorStatisticsView.as_view(), name='doctor-statistics'),
+    
+    # Patient Appointments APIs
+    path('patients/<str:patient_id>/appointments/', AppointmentsByPatientView.as_view(), name='patient-appointments'),
+    
+    # Statistics APIs
+    path('statistics/dashboard/', AppointmentStatisticsView.as_view(), name='appointment-statistics'),
+    
     # Schedule & Shift APIs
     path('schedules/', ScheduleListCreateView.as_view(), name='schedule-list-create'),  # GET, POST
     path('shifts/', ShiftListCreateView.as_view(), name='shift-list-create'),  # GET, POST

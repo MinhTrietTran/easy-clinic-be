@@ -439,3 +439,288 @@ class AppointmentService:
             
         except Appointment.DoesNotExist:
             return None
+
+    @staticmethod
+    def get_appointments_by_doctor(doctor_id, status=None):
+        """
+        Lấy danh sách appointments theo doctor_id với tùy chọn filter theo status
+        """
+        try:
+            # Base query
+            appointments = Appointment.objects.filter(doctor_id=doctor_id)
+            
+            # Filter theo status nếu có
+            if status:
+                appointments = appointments.filter(status=status)
+            
+            # Order theo thời gian
+            appointments = appointments.order_by('-time_created')
+            
+            result = []
+            for appointment in appointments:
+                # Lấy thông tin patient
+                patient_info = UserServiceClient.get_patient_info(appointment.patient_id)
+                
+                # Lấy thông tin doctor (có thể cache để tránh gọi nhiều lần)
+                doctor_info = UserServiceClient.get_doctor_info(appointment.doctor_id)
+                
+                appointment_data = {
+                    "appointment_id": str(appointment.appointment_id),
+                    "time_created": appointment.time_created,
+                    "time_start": appointment.time_start,
+                    "end_time": appointment.end_time,
+                    "status": appointment.status,
+                    "status_display": appointment.get_status_display(),
+                    "amount_pay": appointment.amount_pay,
+                    "total_cost": appointment.total_cost,
+                    "doctor_id": appointment.doctor_id,
+                    "doctor_info": doctor_info,
+                    "patient_id": appointment.patient_id,
+                    "patient_info": patient_info,
+                }
+                result.append(appointment_data)
+            
+            return result
+            
+        except Exception as e:
+            print(f"Error getting appointments for doctor {doctor_id}: {str(e)}")
+            return []
+    
+    @staticmethod
+    def get_appointments_by_doctor_and_date(doctor_id, date, status=None):
+        """
+        Lấy appointments của doctor trong ngày cụ thể
+        """
+        try:
+            from datetime import datetime, timedelta
+            
+            # Parse date nếu là string
+            if isinstance(date, str):
+                date = datetime.fromisoformat(date.replace('Z', '+00:00')).date()
+            
+            # Tạo range cho ngày
+            start_date = datetime.combine(date, datetime.min.time())
+            end_date = start_date + timedelta(days=1)
+            
+            # Query appointments
+            appointments = Appointment.objects.filter(
+                doctor_id=doctor_id,
+                time_start__gte=start_date,
+                time_start__lt=end_date
+            )
+            
+            # Filter theo status nếu có
+            if status:
+                appointments = appointments.filter(status=status)
+            
+            # Order theo thời gian
+            appointments = appointments.order_by('time_start')
+            
+            result = []
+            for appointment in appointments:
+                patient_info = UserServiceClient.get_patient_info(appointment.patient_id)
+                
+                appointment_data = {
+                    "appointment_id": str(appointment.appointment_id),
+                    "time_created": appointment.time_created,
+                    "time_start": appointment.time_start,
+                    "end_time": appointment.end_time,
+                    "status": appointment.status,
+                    "status_display": appointment.get_status_display(),
+                    "amount_pay": appointment.amount_pay,
+                    "total_cost": appointment.total_cost,
+                    "patient_id": appointment.patient_id,
+                    "patient_info": patient_info,
+                }
+                result.append(appointment_data)
+            
+            return result
+            
+        except Exception as e:
+            print(f"Error getting appointments for doctor {doctor_id} on date {date}: {str(e)}")
+            return []
+    
+    @staticmethod
+    def get_appointment_detail(appointment_id):
+        """
+        Lấy chi tiết appointment bao gồm thông tin patient và doctor
+        """
+        try:
+            appointment = Appointment.objects.get(pk=appointment_id)
+            
+            # Lấy thông tin patient
+            patient_info = None
+            if appointment.patient_id:
+                patient_info = UserServiceClient.get_patient_info(appointment.patient_id)
+            
+            # Lấy thông tin doctor nếu đã được assign
+            doctor_info = None
+            if appointment.doctor_id:
+                doctor_info = UserServiceClient.get_doctor_info(appointment.doctor_id)
+            
+            # Convert appointment to dict
+            result = {
+                "id": appointment.id,
+                "appointment_id": str(appointment.appointment_id),
+                "time_created": appointment.time_created,
+                "time_start": appointment.time_start,
+                "end_time": appointment.end_time,
+                "status": appointment.status,
+                "status_display": appointment.get_status_display(),
+                "amount_pay": appointment.amount_pay,
+                "total_cost": appointment.total_cost,
+                "patient_id": appointment.patient_id,
+                "doctor_id": appointment.doctor_id,
+                "patient_info": patient_info,
+                "doctor_info": doctor_info
+            }
+            
+            return result
+            
+        except Appointment.DoesNotExist:
+            return None
+        except Exception as e:
+            print(f"Error getting appointment detail {appointment_id}: {str(e)}")
+            return None
+    
+    @staticmethod
+    @transaction.atomic
+    def update_appointment(appointment_id, update_data):
+        """
+        Cập nhật appointment và trả về thông tin đầy đủ
+        """
+        try:
+            appointment = Appointment.objects.get(pk=appointment_id)
+            
+            # Update các field được cho phép
+            allowed_fields = ['status', 'amount_pay', 'total_cost', 'doctor_id']
+            for field, value in update_data.items():
+                if field in allowed_fields and hasattr(appointment, field):
+                    setattr(appointment, field, value)
+            
+            appointment.save()
+            
+            # Trả về thông tin đầy đủ sau khi update
+            return AppointmentService.get_appointment_detail(appointment_id)
+            
+        except Appointment.DoesNotExist:
+            return None
+        except Exception as e:
+            print(f"Error updating appointment {appointment_id}: {str(e)}")
+            raise ValueError(f"Lỗi khi cập nhật appointment: {str(e)}")
+    
+    @staticmethod
+    def get_appointments_by_patient(patient_id, status=None, limit=10):
+        """
+        Lấy danh sách appointments theo patient_id
+        """
+        try:
+            appointments = Appointment.objects.filter(patient_id=patient_id)
+            
+            if status:
+                appointments = appointments.filter(status=status)
+            
+            appointments = appointments.order_by('-time_created')[:limit]
+            
+            result = []
+            for appointment in appointments:
+                doctor_info = None
+                if appointment.doctor_id:
+                    doctor_info = UserServiceClient.get_doctor_info(appointment.doctor_id)
+                
+                result.append({
+                    "appointment_id": str(appointment.appointment_id),
+                    "time_created": appointment.time_created,
+                    "time_start": appointment.time_start,
+                    "end_time": appointment.end_time,
+                    "status": appointment.status,
+                    "status_display": appointment.get_status_display(),
+                    "total_cost": appointment.total_cost,
+                    "doctor_id": appointment.doctor_id,
+                    "doctor_info": doctor_info,
+                })
+            
+            return result
+            
+        except Exception as e:
+            print(f"Error getting appointments for patient {patient_id}: {str(e)}")
+            return []
+    
+    @staticmethod
+    def get_appointment_statistics():
+        """
+        Lấy thống kê tổng quan appointments
+        """
+        try:
+            from django.db.models import Count, Q
+            from datetime import datetime, timedelta
+            
+            # Thống kê theo status
+            status_stats = Appointment.objects.values('status').annotate(
+                count=Count('id')
+            ).order_by('status')
+            
+            # Thống kê theo ngày (7 ngày gần đây)
+            today = datetime.now().date()
+            week_ago = today - timedelta(days=7)
+            
+            daily_stats = []
+            for i in range(7):
+                date = week_ago + timedelta(days=i)
+                count = Appointment.objects.filter(
+                    time_created__date=date
+                ).count()
+                daily_stats.append({
+                    "date": date.isoformat(),
+                    "count": count
+                })
+            
+            # Tổng số
+            total_appointments = Appointment.objects.count()
+            pending_count = Appointment.objects.filter(status='pending').count()
+            confirmed_count = Appointment.objects.filter(status='confirmed').count()
+            
+            return {
+                "total_appointments": total_appointments,
+                "pending_appointments": pending_count,
+                "confirmed_appointments": confirmed_count,
+                "status_distribution": list(status_stats),
+                "daily_stats": daily_stats
+            }
+            
+        except Exception as e:
+            print(f"Error getting appointment statistics: {str(e)}")
+            return {}
+    
+    @staticmethod
+    def get_doctor_statistics(doctor_id):
+        """
+        Lấy thống kê của doctor cụ thể
+        """
+        try:
+            from django.db.models import Count, Avg, Sum
+            
+            doctor_appointments = Appointment.objects.filter(doctor_id=doctor_id)
+            
+            total_appointments = doctor_appointments.count()
+            confirmed_appointments = doctor_appointments.filter(status='confirmed').count()
+            total_revenue = doctor_appointments.aggregate(
+                total=Sum('total_cost')
+            )['total'] or 0
+            
+            # Lấy thông tin doctor
+            doctor_info = UserServiceClient.get_doctor_info(doctor_id)
+            
+            return {
+                "doctor_id": doctor_id,
+                "doctor_info": doctor_info,
+                "total_appointments": total_appointments,
+                "confirmed_appointments": confirmed_appointments,
+                "total_revenue": total_revenue,
+                "success_rate": round(confirmed_appointments / total_appointments * 100, 2) if total_appointments > 0 else 0
+            }
+            
+        except Exception as e:
+            print(f"Error getting doctor statistics for {doctor_id}: {str(e)}")
+            return {}
+
