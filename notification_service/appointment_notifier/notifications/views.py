@@ -18,7 +18,6 @@ def receive_appointment_data(request):
             time_start = data.get('time_start')
             patient_id = data.get('patient_id')
             appointment_id = data.get('appointment_id')
-            email = data.get('email')
 
             if not all([time_start, appointment_id, patient_id]):
                 return JsonResponse({'error': 'Missing required fields'}, status=400)
