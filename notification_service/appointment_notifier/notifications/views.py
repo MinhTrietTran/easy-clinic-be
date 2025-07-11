@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from .service_discovery import get_service_address
 from django.views.decorators.http import require_POST
 from datetime import datetime
 from .tasks import process_appointment_data, process_prescription_data
@@ -13,10 +14,11 @@ from .tasks import process_appointment_data
 def receive_appointment_data(request):
     if request.method == 'POST':
         try:
-            data = request.json()  # Assuming JSON payload
+            data = json.loads(request.body)  # Assuming JSON payload
             time_start = data.get('time_start')
             patient_id = data.get('patient_id')
             appointment_id = data.get('appointment_id')
+            email = data.get('email')
 
             if not all([time_start, appointment_id, patient_id]):
                 return JsonResponse({'error': 'Missing required fields'}, status=400)
@@ -29,7 +31,12 @@ def receive_appointment_data(request):
                 return JsonResponse({'error': 'Invalid starttime format. Use YYYY-MM-DDTHH:MM:SSZ'}, status=400)
 
             # Call external user API to get email
-            user_api_url = f'http://user-api.example.com/users/{patient_id}'  # Replace with actual URL
+            def get_base_url():
+                address, port = get_service_address("user_service")
+                return f"http://{address}:{port}"
+            base_url = get_base_url()
+
+            user_api_url = f'{base_url}/api/v1/users/patients/{patient_id}/'  
             response = requests.get(user_api_url)
             response.raise_for_status()  # Raise exception for 4xx/5xx errors
             user_data = response.json()
@@ -59,7 +66,7 @@ def receive_appointment_data(request):
 def receive_prescription_data(request):
     if request.method == 'POST':
         try:
-            data = json.loads(request.body.decode('utf-8'))
+            data = json.loads(request.body)
             medication = data.get('medication')
             patient_id = data.get('patient_id')
             prescription_id = data.get('prescription_id')
@@ -68,7 +75,12 @@ def receive_prescription_data(request):
                 return JsonResponse({'error': 'Missing required fields'}, status=400)
 
             # Call external user API to get email
-            user_api_url = f'http://user-api.example.com/users/{patient_id}'  # Replace with actual URL
+            def get_base_url():
+                address, port = get_service_address("user_service")
+                return f"http://{address}:{port}"
+            base_url = get_base_url()
+
+            user_api_url = f'{base_url}/api/v1/users/patients/{patient_id}/' 
             response = requests.get(user_api_url)
             response.raise_for_status()  # Raise exception for 4xx/5xx errors
             user_data = response.json()

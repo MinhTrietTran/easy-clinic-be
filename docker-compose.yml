@@ -62,6 +62,7 @@ services:
       - POSTGRES_PASSWORD=yourpassword
       - POSTGRES_HOST=appointment_service_db
       - POSTGRES_PORT=5432
+
   # === Notification Service===
   notification_service:
     build: 
@@ -128,7 +129,7 @@ services:
       POSTGRES_USER: notification_user
       POSTGRES_PASSWORD: yourpassword
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - notification_service_postgres_data:/var/lib/postgresql/data
   # === Consul ===
