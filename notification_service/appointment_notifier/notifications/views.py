@@ -35,7 +35,7 @@ def receive_appointment_data(request):
                 return f"http://{address}:{port}"
             base_url = get_base_url()
 
-            user_api_url = f'{base_url}/api/v1/users/patients/{patient_id}/'  
+            user_api_url = f'{base_url}/api/v1/users/patient/{patient_id}/email'  
             response = requests.get(user_api_url)
             response.raise_for_status()  # Raise exception for 4xx/5xx errors
             user_data = response.json()
@@ -47,9 +47,9 @@ def receive_appointment_data(request):
             # Queue Celery task with all data
             process_appointment_data.delay({
                 'id': appointment_id,
-                'patient_email': email,
-                'date': date,
-                'time': time
+                'patient_email': email,  # Key phải match với task
+                'date': str(date),  # Convert date object to string
+                'time': str(time)   # Convert time object to string
             })
 
             return JsonResponse({'status': 'Appointment data received and processing'}, status=201)
