@@ -218,10 +218,17 @@ class AppointmentService:
             from appointment_service.service_discovery import get_service_address
             import requests
             
-            # Lấy địa chỉ notification service
-            # address, port = get_service_address("notification_service")
-            notification_url = f"http://notification_service:7000/api/v1/receive/appointments/"
-            
+            # FIX: Sử dụng service discovery thay vì hardcode
+            try:
+                address, port = get_service_address("notification_service")
+                notification_url = f"http://{address}:{port}/api/v1/receive/appointments/"
+                print(f"🔍 Found notification_service via Consul: {address}:{port}")
+            except Exception as e:
+                print(f"⚠️ Service discovery failed: {e}")
+                # Fallback to direct service name
+                notification_url = f"http://notification_service:7000/api/v1/receive/appointments/"
+                print(f"📡 Using fallback URL: {notification_url}")
+        
             # Chuẩn bị data để gửi
             notification_data = {
                 "appointment_id": str(appointment.appointment_id),
@@ -229,8 +236,8 @@ class AppointmentService:
                 "patient_id": appointment.patient_id
             }
             
-            print(f"Sending notification to: {notification_url}")
-            print(f"Notification data: {notification_data}")
+            print(f"📡 Sending notification to: {notification_url}")
+            print(f"📊 Notification data: {notification_data}")
             
             # Gửi POST request đến notification service
             response = requests.post(
@@ -239,6 +246,9 @@ class AppointmentService:
                 headers={'Content-Type': 'application/json'},
                 timeout=10  # 10 seconds timeout
             )
+            
+            print(f"📨 Response status: {response.status_code}")
+            print(f"📨 Response text: {response.text}")
             
             if response.status_code in [200, 201]:
                 print(f"✅ Notification sent successfully for appointment {appointment.appointment_id}")

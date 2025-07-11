@@ -74,6 +74,7 @@ services:
       - DJANGO_SETTINGS_MODULE=appointment_notifier.settings
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500
+      - SERVICE_PORT=7000 # Add this line
       - POSTGRES_DB_NAME=notification_service_db
       - POSTGRES_DB_USER=notification_user
       - POSTGRES_DB_PASSWORD=yourpassword
@@ -90,6 +91,9 @@ services:
       - rabbitmq
       - celery
       - notification_service_db
+      - consul # Add consul dependency
+    networks:
+      - default
 
   rabbitmq:
     image: rabbitmq:3.13-management
