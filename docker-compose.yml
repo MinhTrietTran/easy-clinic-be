@@ -14,6 +14,8 @@ services:
       - "5432:5432"
     volumes:
       - user_service_postgres_data:/var/lib/postgresql/data
+    networks:
+      - clinic_network
 
   user_service:
     build: ./user_service
@@ -29,8 +31,10 @@ services:
       - POSTGRES_DB=user_service_db
       - POSTGRES_USER=user_service_user
       - POSTGRES_PASSWORD=yourpassword
-      - POSTGRES_HOST=user_service_db # Rất quan trọng: trỏ đúng service DB
+      - POSTGRES_HOST=user_service_db
       - POSTGRES_PORT=5432
+    networks:
+      - clinic_network
 
   # === Appointment Service ===
   appointment_service_db:
@@ -45,6 +49,8 @@ services:
       - "5433:5432"
     volumes:
       - appointment_service_postgres_data:/var/lib/postgresql/data
+    networks:
+      - clinic_network
 
   appointment_service:
     build: ./appointment_service
@@ -62,15 +68,61 @@ services:
       - POSTGRES_PASSWORD=yourpassword
       - POSTGRES_HOST=appointment_service_db
       - POSTGRES_PORT=5432
+    networks:
+      - clinic_network
+
+  # === Medical Record Service ===
+  medical_record_service_db:
+    image: postgres:16
+    container_name: medical_record_service_db
+    restart: always
+    environment:
+      POSTGRES_DB: medical_record_db
+      POSTGRES_USER: medical_record_user
+      POSTGRES_PASSWORD: yourpassword
+    ports:
+      - "5434:5432" # Port database: 5434:5432
+    volumes:
+      - medical_record_service_postgres_data:/var/lib/postgresql/data
+    networks:
+      - clinic_network
+
+  medical_record_service:
+    build:
+      context: ./medical_record_service
+      dockerfile: Dockerfile
+    container_name: medical_record_service_app
+    volumes:
+      - ./medical_record_service:/app
+    ports:
+      - "5003:5000" # Port service: 5003:5000
+    environment:
+      - DJANGO_SETTINGS_MODULE=medical_record_service.settings
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - POSTGRES_DB=medical_record_db
+      - POSTGRES_USER=medical_record_user
+      - POSTGRES_PASSWORD=yourpassword
+      - POSTGRES_HOST=medical_record_service_db
+      - POSTGRES_PORT=5432
+      - SERVICE_PORT=5000 # Internal port 5000
+      - SERVICE_HOST=medical_record_service_app
+    depends_on:
+      - medical_record_service_db
+      - consul
+    networks:
+      - clinic_network
 
   # === Consul ===
   consul:
     image: consul:1.1.0
     container_name: consul
     ports:
-      - "8500:8500" # Giao diện Web UI
-      - "8600:8600/udp" # DNS server (nếu dùng)
+      - "8500:8500"
+      - "8600:8600/udp"
     command: agent -dev -client=0.0.0.0
+    networks:
+      - clinic_network
 
   # === Resolver Service ===
   resolver_service:
@@ -79,8 +131,15 @@ services:
     ports:
       - "7070:7000"
     environment:
-      - ENV=local # hoặc prod nếu deploy thật
+      - ENV=local
+    networks:
+      - clinic_network
+
+networks:
+  clinic_network:
+    driver: bridge
 
 volumes:
   user_service_postgres_data:
   appointment_service_postgres_data:
+  medical_record_service_postgres_data:

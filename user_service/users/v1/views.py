@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from .tokens import CustomRefreshToken
-from .services import *
+from .services import *  # This includes get_doctor_id_from_user
 from rest_framework.permissions import IsAuthenticated
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -94,6 +94,27 @@ class GetPatientIdView(APIView):
             return Response({
                 "error": str(e)
             }, status=status.HTTP_403_FORBIDDEN if "not a patient" in str(e) else status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "error": f"An unexpected error occurred: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class GetDoctorIdView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        API trả về doctor_id từ token trong header
+        Header: Authorization: Bearer <access_token>
+        """
+        try:
+            data = get_doctor_id_from_user(request.user)
+            return Response(data, status=status.HTTP_200_OK)
+            
+        except ValueError as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_403_FORBIDDEN if "not a doctor" in str(e) else status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({
                 "error": f"An unexpected error occurred: {str(e)}"

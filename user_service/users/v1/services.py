@@ -173,4 +173,29 @@ def get_patient_id_from_user(user):
         }
     except Patient.DoesNotExist:
         raise ValueError("Patient profile not found for this user")
+    
+def get_doctor_id_from_user(user):
+    """
+    Service function để lấy doctor_id từ user object
+    """
+    # Kiểm tra user có phải là doctor không
+    if user.role != 'doctor':
+        raise ValueError(f"User is not a doctor. Current role: {user.role}")
+    
+    try:
+        # Lấy doctor record từ user
+        doctor = Doctor.objects.get(user=user)
+        return {
+            "doctor_id": doctor.pk,
+            "user_id": str(user.user_id),
+            "email": user.email,
+            "full_name": f"{doctor.first_name} {doctor.last_name}".strip(),
+            "phone": user.phone,
+            "department": doctor.department,
+            "cost": doctor.cost,
+            "is_active": doctor.is_active
+        }
+    except Doctor.DoesNotExist:
+        raise ValueError("Doctor profile not found for this user")
+
 
