@@ -62,7 +62,75 @@ services:
       - POSTGRES_PASSWORD=yourpassword
       - POSTGRES_HOST=appointment_service_db
       - POSTGRES_PORT=5432
+  # === Notification Service===
+  notification_service:
+    build: 
+      context: ./notification_service
+      dockerfile: dockerfile
+    ports:
+      - "7000:7000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=appointment_notifier.settings
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - POSTGRES_DB_NAME=notification_service_db
+      - POSTGRES_DB_USER=notification_user
+      - POSTGRES_DB_PASSWORD=yourpassword
+      - POSTGRES_HOST=notification_service_db  
+      - POSTGRES_PORT=5432
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_PORT=587
+      - EMAIL_USE_TLS=True
+      - EMAIL_HOST_USER=tieu2405@gmail.com
+      - EMAIL_HOST_PASSWORD=jvlx zaet jhmk ipjz
+      - EXTERNAL_API_URL=https://api.example.com/appointments
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+    depends_on:
+      - rabbitmq
+      - celery
+      - notification_service_db
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+
+  celery:
+    build: 
+      context: ./notification_service
+      dockerfile: dockerfile
+    command: celery -A appointment_notifier worker --loglevel=info
+    depends_on:
+      - rabbitmq
+    environment:
+      - DJANGO_SETTINGS_MODULE=appointment_notifier.settings
+      - POSTGRES_DB_NAME=notification_db
+      - POSTGRES_DB_USER=notification_user
+      - POSTGRES_DB_PASSWORD=yourpassword
+      - POSTGRES_DB_HOST=notification_service_db 
+      - POSTGRES_PORT=5432
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_PORT=587
+      - EMAIL_USE_TLS=True
+      - EMAIL_HOST_USER=tieu2405@gmail.com
+      - EMAIL_HOST_PASSWORD=jvlx zaet jhmk ipjz
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+  notification_service_db:
+    image: postgres:16
+    container_name: notification_service_db
+    restart: always
+    environment:
+      POSTGRES_DB: notification_service_db
+      POSTGRES_USER: notification_user
+      POSTGRES_PASSWORD: yourpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - notification_service_postgres_data:/var/lib/postgresql/data
   # === Consul ===
   consul:
     image: consul:1.1.0
@@ -84,3 +152,4 @@ services:
 volumes:
   user_service_postgres_data:
   appointment_service_postgres_data:
+  notification_service_postgres_data:
