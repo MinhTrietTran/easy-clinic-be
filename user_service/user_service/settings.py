@@ -9,9 +9,9 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
 from pathlib import Path
 import os
+import socket
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +26,22 @@ SECRET_KEY = 'django-insecure-t5+=f^73q7*))j=x#%*gvaa)th=x=!aytn@aw-beux&8ur35(1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# Completely disable host validation
+ALLOWED_HOSTS = ['*']
+USE_X_FORWARDED_HOST = True
+
+# Force disable Django's host validation by monkey patching
+# Monkey patching danh lua django
+import sys
+if 'runserver' in sys.argv or 'uwsgi' in sys.argv or True:  # Always apply in this case
+    from django.http import HttpRequest
+    original_get_host = HttpRequest.get_host
+    def patched_get_host(self):
+        host = self.META.get('HTTP_HOST', 'localhost')
+        if ':' in host:
+            host = host.split(':')[0] + ':' + host.split(':')[1]
+        return host
+    HttpRequest.get_host = patched_get_host
 
 
 # Application definition
@@ -38,14 +53,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'users',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -129,3 +146,28 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.CustomUser'
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'USER_ID_FIELD': 'user_id',  # Sử dụng user_id thay vì id
+    'USER_ID_CLAIM': 'user_id',  # Thêm user_id vào payload của JWT
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Thời gian sống của Access Token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Thời gian sống của Refresh Token
+    'ROTATE_REFRESH_TOKENS': False,                 # Không xoay vòng Refresh Token
+    'BLACKLIST_AFTER_ROTATION': True,               # Blacklist Refresh Token sau khi xoay vòng
+}
+# Cai xac thuc mac dinh cho cho toan bo api
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+# CORS configuration
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
+
+# You might also want to set CORS_ALLOW_CREDENTIALS = True if you're sending cookies or authorization headers
+CORS_ALLOW_CREDENTIALS = True

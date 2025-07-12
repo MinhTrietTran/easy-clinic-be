@@ -31,3 +31,6 @@ node_modules/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
+
+# ide evirontment config
+.idea/
